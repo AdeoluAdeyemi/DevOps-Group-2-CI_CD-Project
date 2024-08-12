@@ -1,0 +1,256 @@
+name: Continuous Integration for Python Flask app
+
+#Events
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: eu-west-2                   # set this to your preferred AWS region, e.g. us-west-1
+  ECR_REPOSITORY: tf_govuk_fe_wtf_demo_ecr_repo           # set this to your Amazon ECR repository name
+  ECS_SERVICE: tf_govuk_service                 # set this to your Amazon ECS service name
+  ECS_CLUSTER: tf_ecs_cluster                 # set this to your Amazon ECS cluster name
+  ECS_TASK_DEFINITION: tf_task_def # set this to the path to your Amazon ECS task definition
+  CONTAINER_NAME: govuk-fe-wtf-demo           # set this to the name of the container in the
+  DOCKER_BUILD_DIR: ./
+  DOCKER_FILE: Dockerfile
+  BACKEND_S3_BUCKET: govuk-fe-demo-terraform-state-backend
+  BACKEND_DYNAMODB_TABLE: terraform_state
+
+#Jobs
+jobs:
+  create:
+    name: Create AWS Infrastructure
+    defaults:
+      run:
+        shell: bash
+
+    runs-on: ubuntu-latest
+
+    steps:
+      #====================================#
+      # Checkout repository into runner
+      #====================================#
+      - name: Checkout repository
+        uses: actions/checkout@v4.17
+
+
+      #====================================#
+      # Configure AWS credentials
+      #====================================#
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4.0.2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      #======================================#
+      # Install Terraform and its dependencies
+      #======================================#
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3.1.1
+        with:
+          terraform_version: 1.8.5
+
+
+      #======================================#
+      # Terraform Init and Validate
+      # Use S3 and DynamoDB to manage TF State
+      #======================================#
+      - name: Terraform Init
+        id: init
+        run: |
+          terraform init -upgrade -reconfigure \
+            -backend-config='skip_metadata_api_check=true' \
+            -backend-config='skip_region_validation=true' \
+            -backend-config='skip_credentials_validation=true' \
+            -backend-config='region=${{ env.AWS_REGION }}' \
+            -backend-config='bucket=${{ env.BACKEND_S3_BUCKET }}' \
+            -backend-config='key=terraform-${{ env.ECR_REPOSITORY }}.tfstate' \
+            -backend-config='dynamodb_table=${{ env.BACKEND_DYNAMODB_TABLE }}' \
+          terraform validate -no-color
+        working-directory: infra-tf/
+
+
+      #===================================================#
+      # Terraform Plan AWS VPC, & Other Resources Creation
+      #===================================================#
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -target=aws_vpc.tf_vpc_main 
+          -target=aws_subnet.tf_subnet_main 
+          -target=aws_subnet.tf_subnet_secondary 
+          -target=aws_internet_gateway.tf_gw 
+          -target=aws_route_table.tf_route_tb 
+          -target=aws_route_table_association.tf_rta 
+          -target=aws_route_table_association.tf_rtb
+          -target=aws_security_group.tf_sg_main
+          -target=aws_vpc_security_group_ingress_rule.http
+          -target=aws_vpc_security_group_egress_rule.allow_all_traffic_ipv4
+          -target=aws_lb.tf_lb_test 
+          -target=aws_lb_target_group.tf_tg_main
+          -target=aws_lb_listener.front_end
+          -target=aws_ecr_repository.tf_govuk_fe_wtf_demo_ecr_repo
+          -target=aws_ecr_lifecycle_policy.tf_private_ecr_life_pol
+          -target=aws_ecs_cluster.tf_ecs_cluster
+          -no-color
+        working-directory: infra-tf/
+        continue-on-error: true
+
+
+      #===================================================#
+      # Terraform Apply Infrastructure Creation
+      #===================================================#
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        id: apply
+        working-directory: infra-tf/
+        run: terraform apply -auto-approve
+
+
+  build:
+    name: Build, tag, and push docker image
+
+    runs-on: ubuntu-latest
+    needs: create
+
+    steps:
+      #====================================#
+      # Checkout repository into runner
+      #====================================#
+      - name: Checkout repository
+        uses: actions/checkout@v4.17
+
+      #======================================#
+      # Install Terraform and its dependencies
+      #======================================#
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3.1.1
+        with:
+          terraform_version: 1.8.5
+
+      #======================================#
+      # Terraform Init and Validate
+      # Use S3 and DynamoDB to manage TF State
+      #======================================#
+      - name: Terraform Init
+        id: init
+        run: |
+          terraform init -upgrade -reconfigure \
+            -backend-config='skip_metadata_api_check=true' \
+            -backend-config='skip_region_validation=true' \
+            -backend-config='skip_credentials_validation=true' \
+            -backend-config='region=${{ env.AWS_REGION }}' \
+            -backend-config='bucket=${{ env.BACKEND_S3_BUCKET }}' \
+            -backend-config='key=terraform-${{ env.ECR_REPOSITORY }}.tfstate' \
+            -backend-config='dynamodb_table=${{ env.BACKEND_DYNAMODB_TABLE }}' \
+          terraform validate -no-color
+        working-directory: infra-tf/
+
+      # #====================================#
+      # # Install docker and its dependencies
+      # #====================================#
+      # - name: Install Docker
+      #   uses: docker-practice/actions-setup-docker@master
+      #   timeout-minutes: 12
+
+
+      #========================================#
+      # Build docker image 
+      # and push to AWS ECR Repo
+      #========================================#
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2.0.1
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-publish
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build "${{ env.DOCKER_BUILD_DIR }}" -f "${{ env.DOCKER_FILE }}" -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "IMAGE $IMAGE_TAG is pushed to $ECR_REGISTRY/$ECR_REPOSITORY"
+          echo "image_tag=$IMAGE_TAG" 
+          echo "full_image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+
+      #========================================#
+      # Create ECS Cluster, Task Definition,
+      # and Service
+      #========================================#      
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -target=aws_ecs_task_definition.tf_task_def 
+          -target=aws_ecs_service.tf_govuk_service 
+          -no-color
+        working-directory: infra-tf/
+        continue-on-error: true
+
+        
+      #===================================================#
+      # Terraform Apply Infrastructure Creation
+      #===================================================#
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        id: apply
+        working-directory: infra-tf/
+        run: terraform apply -auto-approve
+        
+      #============================================#
+      # Add a comment to the pull request to indicate
+      # the task was successful, and provide the 
+      # details of the app url
+      #============================================#
+      # - name: Add comments to the PR
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+            <details><summary>Validation Output</summary>
+      
+            \`\`\`\n
+            ${{ steps.validate.outputs.stdout }}
+            \`\`\`
+      
+            </details>
+      
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+      
+            <details><summary>Show Plan</summary>
+      
+            \`\`\`\n
+            ${process.env.PLAN}
+            \`\`\`
+      
+            </details>
+      
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
+      
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
