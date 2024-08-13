@@ -69,6 +69,8 @@ jobs:
           echo "dynamodb_hash = \"${{ env.BACKEND_DYNAMODB_TABLE_HASH_KEY }}\"" >> prod.tfvars
           cat prod.tfvars
         working-directory: infra/s3-dynamodb-state/
+
+        
       #================#
       # Terraform Plan 
       #================#

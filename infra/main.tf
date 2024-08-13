@@ -1,27 +1,22 @@
 terraform {
   backend "s3" {
-      bucket = "govuk-fe-demo-terraform-state-backend"
+      bucket = var.s3_bucket_name
       key = "terraform.tfstate"
-      region = "eu-west-2"
-      dynamodb_table = "terraform_state"    
-
-      # bucket = var.aws_bucket_name
-      # key = var.state_key
-      # region = var.aws_region
-      # dynamodb_table = var.dynamodb_table
+      region = var.aws_region
+      dynamodb_table = var.dynamodb_table_name   
   }
   
 }
 
 
 provider "aws" {
-  region = "eu-west-2"
+  region = var.aws_region
 }
 
 
 #VPC
 resource "aws_vpc" "tf_vpc_main" {
-  cidr_block       = "10.0.0.0/16"
+  cidr_block       = var.aws_vpc_cidr_block
   instance_tenancy = "default"
 
   tags = {
@@ -33,8 +28,8 @@ resource "aws_vpc" "tf_vpc_main" {
 #Subnets
 resource "aws_subnet" "tf_subnet_main" {
   vpc_id     = aws_vpc.tf_vpc_main.id
-  cidr_block = "10.0.1.0/24"
-  availability_zone = "eu-west-2a"
+  cidr_block = var.aws_subnet_main_cidr_block
+  availability_zone = var.availability_zones[0]
   map_public_ip_on_launch = true
 
   tags = {
@@ -44,8 +39,8 @@ resource "aws_subnet" "tf_subnet_main" {
 
 resource "aws_subnet" "tf_subnet_secondary" {
   vpc_id     = aws_vpc.tf_vpc_main.id
-  cidr_block = "10.0.2.0/24"
-  availability_zone = "eu-west-2c"
+  cidr_block = var.aws_subnet_secondary_cidr_block
+  availability_zone = var.availability_zones[1]
   map_public_ip_on_launch = true
 
   tags = {
@@ -85,7 +80,7 @@ resource "aws_route_table" "tf_route_tb" {
   vpc_id = aws_vpc.tf_vpc_main.id
 
   route {
-    cidr_block = "0.0.0.0/0"
+    cidr_block = var.aws_route_table_cidr_block
     gateway_id = aws_internet_gateway.tf_gw.id
   }
 
@@ -130,10 +125,10 @@ resource "aws_security_group" "tf_sg_main" {
 
 resource "aws_vpc_security_group_ingress_rule" "http" {
   security_group_id = aws_security_group.tf_sg_main.id
-  cidr_ipv4         = "0.0.0.0/0" #aws_vpc.tf_vpc_main.cidr_block
-  from_port         = 80
+  cidr_ipv4         = var.aws_security_group_ingress_cidr_block #aws_vpc.tf_vpc_main.cidr_block
+  from_port         = var.port
   ip_protocol       = "tcp"
-  to_port           = 80
+  to_port           = var.port
 }
 
 # resource "aws_vpc_security_group_ingress_rule" "https" {
@@ -146,7 +141,7 @@ resource "aws_vpc_security_group_ingress_rule" "http" {
 
 resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4" {
   security_group_id = aws_security_group.tf_sg_main.id
-  cidr_ipv4         = "0.0.0.0/0"
+  cidr_ipv4         = var.aws_security_group_egress_cidr_block
   ip_protocol       = "-1" # semantically equivalent to all ports
 }
 
@@ -161,7 +156,7 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4" {
 
 #ALB
 resource "aws_lb" "tf_lb_test" {
-  name               = "tf-lb-test"
+  name               = var.aws_elb_name
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.tf_sg_main.id]
@@ -184,8 +179,8 @@ resource "aws_lb" "tf_lb_test" {
 
 #Target Group
 resource "aws_lb_target_group" "tf_tg_main" {
-  name     = "tf-tg-main"
-  port     = 80
+  name     = var.aws_elb_target_group_name
+  port     = var.port
   protocol = "HTTP"
   target_type = "ip"
   vpc_id   = aws_vpc.tf_vpc_main.id
@@ -194,7 +189,7 @@ resource "aws_lb_target_group" "tf_tg_main" {
 # ALB Listener
 resource "aws_lb_listener" "front_end" {
   load_balancer_arn = aws_lb.tf_lb_test.arn
-  port              = "80"
+  port              = var.port
   protocol          = "HTTP"
   #ssl_policy        = "ELBSecurityPolicy-2016-08"
   #certificate_arn   = "arn:aws:iam::187416307283:server-certificate/test_cert_rab3wuqwgja25ct3n4jdj2tzu4"
@@ -225,7 +220,7 @@ resource "aws_lb_listener" "front_end" {
 
 #ECR
 resource "aws_ecr_repository" "tf_govuk_fe_wtf_demo_ecr_repo" {
-  name = "tf_govuk_fe_wtf_demo_ecr_repo"
+  name = var.aws_ecr_repo_name
   image_tag_mutability = "MUTABLE"
 
   image_scanning_configuration {
@@ -265,7 +260,7 @@ EOF
 
 #ECS Cluster
 resource "aws_ecs_cluster" "tf_ecs_cluster" {
-  name = "tf_ecs_cluster"
+  name = var.aws_ecs_cluster_name
 
   setting {
     name  = "containerInsights"
@@ -292,8 +287,13 @@ data "aws_iam_role" "ecs_task_execution_role" {
   name = "ecsTaskExecutionRole"
 }
 
+data "aws_ecr_repository" "repo_details" {
+  name = aws_ecr_repository.tf_govuk_fe_wtf_demo_ecr_repo.name
+}
+
+
 resource "aws_ecs_task_definition" "tf_task_def" {
-  family                   = "tf_task_def"
+  family                   = var.aws_task_def
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = 1024
@@ -301,15 +301,15 @@ resource "aws_ecs_task_definition" "tf_task_def" {
   execution_role_arn = data.aws_iam_role.ecs_task_execution_role.arn
   container_definitions    = jsonencode([
     {
-      name      = "govuk-fe-wtf-demo"
-      image     = "637423624556.dkr.ecr.eu-west-2.amazonaws.com/tf_govuk_fe_wtf_demo_ecr_repo:latest"
+      name      = var.aws_ecs_task_df_container_name
+      image     = "${data.aws_ecr_repository.repo_details.repository_url}/${var.aws_ecr_repo_name}:latest"
       cpu       = 1024
       memory    = 2048
       essential = true
       portMappings = [
         {
-          containerPort = 80
-          hostPort      = 80
+          containerPort = var.port
+          hostPort      = var.port
           protocol      = "tcp"
         }
       ]
@@ -326,7 +326,7 @@ resource "aws_ecs_task_definition" "tf_task_def" {
 
 #ECS Service
 resource "aws_ecs_service" "tf_govuk_service" {
-  name            = "tf_govuk_service"
+  name            = var.aws_ecs_name
   cluster         = aws_ecs_cluster.tf_ecs_cluster.id
   task_definition = aws_ecs_task_definition.tf_task_def.arn
   launch_type = "FARGATE"
@@ -340,8 +340,8 @@ resource "aws_ecs_service" "tf_govuk_service" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.tf_tg_main.arn
-    container_name   = "govuk-fe-wtf-demo"
-    container_port   = 80
+    container_name   = var.aws_ecs_task_df_container_name
+    container_port   = var.port
   }
 }
 
