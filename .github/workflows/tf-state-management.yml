@@ -56,6 +56,16 @@ jobs:
           terraform validate -no-color
         working-directory: infra/s3-dynamodb-state/
 
+      #================================#
+      # Dynamically create tfvars file
+      #================================#
+      - name: Generate tfvars file
+        id: tfvars
+        run: |
+          echo "s3_bucket_name = \"${{ env.BACKEND_S3_BUCKET }}\"" >> tfvars.auto.tfvars
+          echo "s3_bucket_versioning = \"${{ env.BACKEND_S3_BUCKET_VERSIONING }}\"" >> tfvars.auto.tfvars
+          echo "dynamodb_table_name = \"${{ env.BACKEND_DYNAMODB_TABLE }}\"" >> tfvars.auto.
+          echo "dynamodb_hash = \"${{ env.BACKEND_DYNAMODB_TABLE_HASH_KEY }}\"" >> tfvars.auto.tfvars
 
       #================#
       # Terraform Plan 
@@ -63,10 +73,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |
-          terraform plan -no-color -var="s3_bucket_name=${{ env.BACKEND_S3_BUCKET }}" \
-          -var="s3_bucket_versioning=${{ env.BACKEND_S3_BUCKET_VERSIONING }}" \
-          -var="dynamodb_table_name=${{ env.BACKEND_DYNAMODB_TABLE }}" \
-          -var="dynamodb_hash=${{ env.BACKEND_DYNAMODB_TABLE_HASH_KEY }}"
+          terraform plan -no-color
         working-directory: infra/s3-dynamodb-state/
         continue-on-error: true
 
@@ -81,7 +88,4 @@ jobs:
       - name: Terraform Apply
         id: apply
         working-directory: infra/s3-dynamodb-state/
-        run: terraform apply -no-color -var="s3_bucket_name=${{ env.BACKEND_S3_BUCKET }}" \
-          -var="s3_bucket_versioning=${{ env.BACKEND_S3_BUCKET_VERSIONING }}" \
-          -var="dynamodb_table_name=${{ env.BACKEND_DYNAMODB_TABLE }}" \
-          -var="dynamodb_hash=${{ env.BACKEND_DYNAMODB_TABLE_HASH_KEY }}" -auto-approve
+        run: terraform apply -no-color -auto-approve
