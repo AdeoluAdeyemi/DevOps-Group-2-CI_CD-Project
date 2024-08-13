@@ -80,8 +80,3 @@ variable "s3_bucket_name" {
   description = "Name of S3 bucket"
   type = string
 }
-
-variable "dynamodb_table_name" {
-  description = "Name of DynamoDB table"
-  type = string
-}
