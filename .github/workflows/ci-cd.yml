@@ -73,7 +73,7 @@ jobs:
             -backend-config='key=terraform-${{ env.ECR_REPOSITORY }}.tfstate' \
             -backend-config='dynamodb_table=${{ env.BACKEND_DYNAMODB_TABLE }}' \
           terraform validate -no-color
-        working-directory: infra-tf/
+        working-directory: infra/
 
 
       #===================================================#
@@ -99,7 +99,7 @@ jobs:
           -target=aws_ecr_lifecycle_policy.tf_private_ecr_life_pol
           -target=aws_ecs_cluster.tf_ecs_cluster
           -no-color
-        working-directory: infra-tf/
+        working-directory: infra/
         continue-on-error: true
 
 
@@ -112,7 +112,7 @@ jobs:
 
       - name: Terraform Apply
         id: apply
-        working-directory: infra-tf/
+        working-directory: infra/
         run: terraform apply -auto-approve
 
 
@@ -153,7 +153,7 @@ jobs:
             -backend-config='key=terraform-${{ env.ECR_REPOSITORY }}.tfstate' \
             -backend-config='dynamodb_table=${{ env.BACKEND_DYNAMODB_TABLE }}' \
           terraform validate -no-color
-        working-directory: infra-tf/
+        working-directory: infra/
 
       # #====================================#
       # # Install docker and its dependencies
@@ -196,7 +196,7 @@ jobs:
           terraform plan -target=aws_ecs_task_definition.tf_task_def 
           -target=aws_ecs_service.tf_govuk_service 
           -no-color
-        working-directory: infra-tf/
+        working-directory: infra/
         continue-on-error: true
 
         
@@ -209,7 +209,7 @@ jobs:
 
       - name: Terraform Apply
         id: apply
-        working-directory: infra-tf/
+        working-directory: infra/
         run: terraform apply -auto-approve
         
       #============================================#
