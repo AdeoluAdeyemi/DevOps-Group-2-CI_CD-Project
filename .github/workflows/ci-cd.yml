@@ -4,14 +4,8 @@ name: Continuous Integration for Python Flask app
 on:
   push:
     branches: [ main ]
-    paths-ignore:
-      - "**.tfstate"
-      - "**.tfstate.encrypted"
   pull_request:
     branches: [ main ]
-    paths-ignore:
-      - "**.tfstate"
-      - "**.tfstate.encrypted"
   workflow_dispatch:
 
 env:
@@ -78,6 +72,7 @@ jobs:
           encryption_key: ${{ secrets.TF_STATE_PASSPHRASE }}
           operation: download
           location: artifact
+          directory: ./
           github_token: ${{ secrets.GH_ACCESS_TOKEN }}
         continue-on-error: true
         
@@ -147,6 +142,7 @@ jobs:
           encryption_key: ${{ secrets.TF_STATE_PASSPHRASE }}
           operation: upload
           location: artifact
+          directory: ./
           github_token: ${{ secrets.GH_ACCESS_TOKEN }}
 
   build:
@@ -178,6 +174,7 @@ jobs:
           encryption_key: ${{ secrets.TF_STATE_PASSPHRASE }}
           operation: download
           location: artifact
+          directory: ./
           github_token: ${{ secrets.GH_ACCESS_TOKEN }}
         continue-on-error: true
 
@@ -315,4 +312,5 @@ jobs:
           encryption_key: ${{ secrets.TF_STATE_PASSPHRASE }}
           operation: upload
           location: artifact
+          directory: ./
           github_token: ${{ secrets.GH_ACCESS_TOKEN }}
