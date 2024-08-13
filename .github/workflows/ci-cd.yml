@@ -129,9 +129,6 @@ jobs:
           echo "aws_ecs_name = \"${{ env.ECS_SERVICE }}\"" >> prod.tfvars
           echo "aws_task_def = \"${{ env.ECS_TASK_DEFINITION }}\"" >> prod.tfvars
           echo "aws_ecs_task_df_container_name = \"${{ env.CONTAINER_NAME }}\"" >> prod.tfvars
-          echo "dynamodb_hash = \"${{ env.BACKEND_DYNAMODB_TABLE }}\"" >> prod.tfvars
-          echo "s3_bucket_name = \"${{ env.BACKEND_S3_BUCKET }}\"" >> prod.tfvars
-          echo "dynamodb_table_name = \"${{ env.VPC_SUBNET_MAIN }}\"" >> prod.tfvars
 
           cat prod.tfvars
         working-directory: infra/
