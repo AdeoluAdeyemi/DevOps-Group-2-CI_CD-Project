@@ -7,7 +7,7 @@ data "aws_dynamodb_table" "check_dynamodb_table_exist" {
 }
 
 resource "aws_s3_bucket" "state_s3_bucket" {
-  count = (data.aws_s3_bucket.check_s3_bucket_exist.arn) ? 0 : 1
+  count = (data.aws_s3_bucket.check_s3_bucket_exist.id == "govuk-fe-demo-terraform-state-backend") ? 0 : 1
   bucket = "govuk-fe-demo-terraform-state-backend"
   object_lock_enabled = true
   #force_destroy = true
@@ -23,7 +23,7 @@ resource "aws_s3_bucket" "state_s3_bucket" {
 }
 
 resource "aws_s3_bucket_versioning" "state_s3_bucket" {
-  count = (data.aws_s3_bucket.check_s3_bucket_exist.arn) ? 0 : 1
+  count = (data.aws_s3_bucket.check_s3_bucket_exist.id == "terraform_state") ? 0 : 1
   bucket = aws_s3_bucket.state_s3_bucket[0].id
   versioning_configuration {
     status = "Enabled"
