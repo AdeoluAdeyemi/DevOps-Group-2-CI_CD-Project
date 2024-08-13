@@ -61,45 +61,43 @@ jobs:
       # Store your Terraform state file as an encrypted Github workflow 
       # artifact and downloads and decrypts the state on subsequent runs.
       #===================================================================#
-      - name: Download Terraform state
-        uses: devgioele/terraform-state-artifact@v4
+      # - name: Download Terraform state
+      #   uses: devgioele/terraform-state-artifact@v4
+      #   with:
+      #     passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
+      #     download_upload: download
+        
+      - name: Manage Terraform State
+        uses: sturlabragason/terraform_state_artifact@v1
         with:
-          passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
-          download_upload: download
-        
-        
-      #===================================================================#
-      # Terraform Create S3 and DynamoDB resources for TF state management
-      #===================================================================#
-      - name: Terraform S3 & DynamoDB
-        id: s3-dynamodb-init 
-        run: |
-          terraform init 
-          
-          terraform plan -target=aws_s3_bucket.state_s3_bucket \
-          -target=aws_s3_bucket_versioning.state_s3_bucket \
-          -target=aws_dynamodb_table.terraform-lock 
-          
-          terraform apply -target=aws_s3_bucket.state_s3_bucket \
-          -target=aws_s3_bucket_versioning.state_s3_bucket \
-          -target=aws_dynamodb_table.terraform-lock \
-          -auto-approve -no-color 
-        working-directory: infra/
+          encryptionkey: ${{ secrets.TF_STATE_PASSPHRASE }}
 
-      #====================================================================#
-      # Terraform Init and Validate. Use S3 and DynamoDB to manage TF State
-      #====================================================================#
+          
+      # #===================================================================#
+      # # Terraform Create S3 and DynamoDB resources for TF state management
+      # #===================================================================#
+      # - name: Terraform S3 & DynamoDB
+      #   id: s3-dynamodb-init 
+      #   run: |
+      #     terraform init 
+          
+      #     terraform plan -target=aws_s3_bucket.state_s3_bucket \
+      #     -target=aws_s3_bucket_versioning.state_s3_bucket \
+      #     -target=aws_dynamodb_table.terraform-lock 
+          
+      #     terraform apply -target=aws_s3_bucket.state_s3_bucket \
+      #     -target=aws_s3_bucket_versioning.state_s3_bucket \
+      #     -target=aws_dynamodb_table.terraform-lock \
+      #     -auto-approve -no-color 
+      #   working-directory: infra/
+
+      #=============================#
+      # Terraform Init and Validate.
+      #=============================#
       - name: Terraform Init
         id: init
         run: |
-          terraform init -upgrade -reconfigure \
-            -backend-config='skip_metadata_api_check=true' \
-            -backend-config='skip_region_validation=true' \
-            -backend-config='skip_credentials_validation=true' \
-            -backend-config='region=${{ env.AWS_REGION }}' \
-            -backend-config='bucket=${{ env.BACKEND_S3_BUCKET }}' \
-            -backend-config='key=terraform-${{ env.ECR_REPOSITORY }}.tfstate' \
-            -backend-config='dynamodb_table=${{ env.BACKEND_DYNAMODB_TABLE }}' 
+          terraform init   
           terraform validate -no-color
         working-directory: infra/
 
@@ -130,11 +128,11 @@ jobs:
       # Upload Terraform state file as an encrypted Github workflow 
       # artifact and downloads and decrypts the state on subsequent runs 
       #==================================================================#
-      - name: Upload Terraform state
-        uses: devgioele/terraform-state-artifact@v4
-        with:
-          passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
-          download_upload: upload
+      # - name: Upload Terraform state
+      #   uses: devgioele/terraform-state-artifact@v4
+      #   with:
+      #     passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
+      #     download_upload: upload
 
   build:
     name: Build, tag, and push docker image
@@ -149,18 +147,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-          
 
       #===================================================================#
       # Store your Terraform state file as an encrypted Github workflow 
       # artifact and downloads and decrypts the state on subsequent runs.
       #===================================================================#
-      - name: Download Terraform state
-        uses: devgioele/terraform-state-artifact@v4
-        with:
-          passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
-          download_upload: download
+      # - name: Download Terraform state
+      #   uses: devgioele/terraform-state-artifact@v4
+      #   with:
+      #     passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
+      #     download_upload: download
 
+      - name: Manage Terraform State
+        uses: sturlabragason/terraform_state_artifact@v1
+        with:
+          encryptionkey: ${{ secrets.TF_STATE_PASSPHRASE }}
 
       #====================================#
       # Configure AWS credentials
@@ -180,31 +181,15 @@ jobs:
         with:
           terraform_version: 1.8.5
 
-      #======================================#
+      #=============================#
       # Terraform Init and Validate
-      # Use S3 and DynamoDB to manage TF State
-      #======================================#
+      #=============================#
       - name: Terraform Init
         id: init
         run: |
-          terraform init -upgrade -reconfigure \
-            -backend-config='skip_metadata_api_check=true' \
-            -backend-config='skip_region_validation=true' \
-            -backend-config='skip_credentials_validation=true' \
-            -backend-config='region=${{ env.AWS_REGION }}' \
-            -backend-config='bucket=${{ env.BACKEND_S3_BUCKET }}' \
-            -backend-config='key=terraform-${{ env.ECR_REPOSITORY }}.tfstate' \
-            -backend-config='dynamodb_table=${{ env.BACKEND_DYNAMODB_TABLE }}' 
+          terraform init 
           terraform validate -no-color
         working-directory: infra/
-
-      # #====================================#
-      # # Install docker and its dependencies
-      # #====================================#
-      # - name: Install Docker
-      #   uses: docker-practice/actions-setup-docker@master
-      #   timeout-minutes: 12
-
 
       #========================================#
       # Build docker image 
@@ -301,8 +286,8 @@ jobs:
       # Upload Terraform state file as an encrypted Github workflow 
       # artifact and downloads and decrypts the state on subsequent runs 
       #==================================================================#
-      - name: Upload Terraform state
-        uses: devgioele/terraform-state-artifact@v4
-        with:
-          passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
-          download_upload: upload
+      # - name: Upload Terraform state
+      #   uses: devgioele/terraform-state-artifact@v4
+      #   with:
+      #     passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
+      #     download_upload: upload
