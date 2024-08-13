@@ -56,11 +56,25 @@ jobs:
         with:
           terraform_version: 1.8.5
 
+      #===================================================================#
+      # Terraform Create S3 and DynamoDB resources for TF state management
+      #===================================================================#
+      - name: Terraform S3 & DynamoDB
+        run: |
+          terraform init
+          
+          terraform plan -target=aws_s3_bucket.state_s3_bucket \
+          -target=aws_s3_bucket_versioning.state_s3_bucket \
+          -target=aws_dynamodb_table.terraform-lock 
+          
+          terraform apply -target=aws_s3_bucket.state_s3_bucket \
+          -target=aws_s3_bucket_versioning.state_s3_bucket \
+          -target=aws_dynamodb_table.terraform-lock \
+          -auto-approve -no-color 
 
-      #======================================#
-      # Terraform Init and Validate
-      # Use S3 and DynamoDB to manage TF State
-      #======================================#
+      #====================================================================#
+      # Terraform Init and Validate. Use S3 and DynamoDB to manage TF State
+      #====================================================================#
       - name: Terraform Init
         id: init
         run: |
