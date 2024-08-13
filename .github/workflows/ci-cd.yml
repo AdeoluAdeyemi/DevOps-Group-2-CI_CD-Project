@@ -69,7 +69,8 @@ jobs:
           -target=aws_dynamodb_table.check_dynamodb_table_exist
 
           terraform apply -target=data.aws_s3_bucket.check_s3_bucket_exist \
-          -target=aws_dynamodb_table.check_dynamodb_table_exist
+          -target=aws_dynamodb_table.check_dynamodb_table_exist \
+          -auto-approve 
         working-directory: infra/
 
 
