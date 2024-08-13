@@ -69,43 +69,6 @@ jobs:
           terraform_version: 1.8.5
           
 
-      # #===================================================================#
-      # # Store your Terraform state file as an encrypted Github workflow 
-      # # artifact and downloads and decrypts the state on subsequent runs.
-      # #===================================================================#
-      # - name: Download Terraform state
-      #   # uses: devgioele/terraform-state-artifact@v4
-      #   # with:
-      #   #   passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
-      #   #   download_upload: download
-
-      #   uses: badgerhobbs/terraform-state@v2
-      #   with:
-      #     encryption_key: ${{ secrets.TF_STATE_PASSPHRASE }}
-      #     operation: download
-      #     location: artifact
-      #     directory: ./
-      #     github_token: ${{ secrets.GH_ACCESS_TOKEN }}
-      #   continue-on-error: true
-        
-      # #===================================================================#
-      # # Terraform Create S3 and DynamoDB resources for TF state management
-      # #===================================================================#
-      # - name: Terraform S3 & DynamoDB
-      #   id: s3-dynamodb-init 
-      #   run: |
-      #     terraform init 
-          
-      #     terraform plan -target=aws_s3_bucket.state_s3_bucket \
-      #     -target=aws_s3_bucket_versioning.state_s3_bucket \
-      #     -target=aws_dynamodb_table.terraform-lock 
-          
-      #     terraform apply -target=aws_s3_bucket.state_s3_bucket \
-      #     -target=aws_s3_bucket_versioning.state_s3_bucket \
-      #     -target=aws_dynamodb_table.terraform-lock \
-      #     -auto-approve -no-color 
-      #   working-directory: infra/
-
       #================================#
       # Dynamically create tfvars file
       #================================#
@@ -135,13 +98,20 @@ jobs:
         working-directory: infra/
 
       #=============================#
-      # Terraform Init and Validate.
+      # Terraform Init
       #=============================#
       - name: Terraform Init
         id: init
-        run: |
-          terraform init   
-          terraform validate -no-color
+        run: terraform init   
+        working-directory: infra/
+
+        
+      #=============================#
+      # Terraform Validate.
+      #=============================#
+      - name: Terraform Init
+        id: validate
+        run: terraform validate -no-color
         working-directory: infra/
 
 
@@ -167,59 +137,6 @@ jobs:
         working-directory: infra/
         run: terraform apply  -var-file="prod.tfvars" -auto-approve -lock=false
 
-      #==================================================================#
-      # Upload Terraform state file as an encrypted Github workflow 
-      # artifact and downloads and decrypts the state on subsequent runs 
-      #==================================================================#
-      # - name: Encrypt and Upload Terraform state
-      #   # uses: devgioele/terraform-state-artifact@v4
-      #   # with:
-      #   #   passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
-      #   #   download_upload: upload
-
-      #   uses: badgerhobbs/terraform-state@v2
-      #   with:
-      #     encryption_key: ${{ secrets.TF_STATE_PASSPHRASE }}
-      #     operation: upload
-      #     location: artifact
-      #     directory: ./
-      #     github_token: ${{ secrets.GH_ACCESS_TOKEN }}
-
-  # build:
-  #   name: Build, tag, and push docker image
-
-  #   runs-on: ubuntu-latest
-  #   needs: create
-
-  #   steps:
-
-
-      # #====================================#
-      # # Checkout repository into runner
-      # #====================================#
-      # - name: Checkout repository
-      #   uses: actions/checkout@v4
-
-
-      # #===================================================================#
-      # # Store your Terraform state file as an encrypted Github workflow 
-      # # artifact and downloads and decrypts the state on subsequent runs.
-      # #===================================================================#
-      # - name: Download Terraform state
-      #   # uses: devgioele/terraform-state-artifact@v4
-      #   # with:
-      #   #   passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
-      #   #   download_upload: download
-
-      #   uses: badgerhobbs/terraform-state@v2
-      #   with:
-      #     encryption_key: ${{ secrets.TF_STATE_PASSPHRASE }}
-      #     operation: download
-      #     location: artifact
-      #     directory: ./
-      #     github_token: ${{ secrets.GH_ACCESS_TOKEN }}
-      #   continue-on-error: true
-
       #====================================#
       # Configure AWS credentials
       #====================================#
@@ -229,24 +146,6 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-
-      # #======================================#
-      # # Install Terraform and its dependencies
-      # #======================================#
-      # - name: Setup Terraform
-      #   uses: hashicorp/setup-terraform@v3.1.1
-      #   with:
-      #     terraform_version: 1.8.5
-
-      # #=============================#
-      # # Terraform Init and Validate
-      # #=============================#
-      # - name: Terraform Init
-      #   id: init
-      #   run: |
-      #     terraform init 
-      #     terraform validate -no-color
-      #   working-directory: infra/
 
       #========================================#
       # Build docker image 
@@ -269,6 +168,16 @@ jobs:
           echo "IMAGE $IMAGE_TAG is pushed to $ECR_REGISTRY/$ECR_REPOSITORY"
           echo "image_tag=$IMAGE_TAG" 
           echo "full_image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      #========================================#
+      # Format TF configuration file
+      #========================================#      
+      - name: Terraform Format
+        id: fmt
+        run: |
+          terraform format -no-color -lock=false
+        working-directory: infra/
+        continue-on-error: true
 
 
       #========================================#
@@ -300,59 +209,41 @@ jobs:
       # the task was successful, and provide the 
       # details of the app url
       #============================================#
-      # - name: Add comments to the PR
-        # uses: actions/github-script@v7
-        # if: github.event_name == 'pull_request'
-        # env:
-        #   PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
-        # with:
-        #   github-token: ${{ secrets.GITHUB_TOKEN }}
-        #   script: |
-        #     const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-        #     #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-        #     #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-        #     <details><summary>Validation Output</summary>
+      - name: Add comments to the PR
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "terraform\n${{ steps.plan-build.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GH_ACCESS_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+            <details><summary>Validation Output</summary>
       
-        #     \`\`\`\n
-        #     ${{ steps.validate.outputs.stdout }}
-        #     \`\`\`
+            \`\`\`\n
+            ${{ steps.validate.outputs.stdout }}
+            \`\`\`
       
-        #     </details>
+            </details>
       
-        #     #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
       
-        #     <details><summary>Show Plan</summary>
+            <details><summary>Show Plan</summary>
       
-        #     \`\`\`\n
-        #     ${process.env.PLAN}
-        #     \`\`\`
+            \`\`\`\n
+            ${process.env.PLAN}
+            \`\`\`
       
-        #     </details>
+            </details>
       
-        #     *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
       
-        #     github.rest.issues.createComment({
-        #       issue_number: context.issue.number,
-        #       owner: context.repo.owner,
-        #       repo: context.repo.repo,
-        #       body: output
-        #     })
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
 
-    
-      # #==================================================================#
-      # # Upload Terraform state file as an encrypted Github workflow 
-      # # artifact and downloads and decrypts the state on subsequent runs 
-      # #==================================================================#
-      # - name: Encrypt and Upload Terraform state
-      #   # uses: devgioele/terraform-state-artifact@v4
-      #   # with:
-      #   #   passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
-      #   #   download_upload: upload
-
-      #   uses: badgerhobbs/terraform-state@v2
-      #   with:
-      #     encryption_key: ${{ secrets.TF_STATE_PASSPHRASE }}
-      #     operation: upload
-      #     location: artifact
-      #     directory: ./
-      #     github_token: ${{ secrets.GH_ACCESS_TOKEN }}
