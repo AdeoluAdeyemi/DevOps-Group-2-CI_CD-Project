@@ -7,7 +7,7 @@ data "aws_dynamodb_table" "check_dynamodb_table_exist" {
 }
 
 resource "aws_s3_bucket" "state_s3_bucket" {
-  bucket = "govuk-fe-demo-terraform-state-backend"
+  bucket = data.aws_s3_bucket.check_s3_bucket_exist.arn ? null : "govuk-fe-demo-terraform-state-backend"
   object_lock_enabled = true
   #force_destroy = true
 
@@ -29,7 +29,7 @@ resource "aws_s3_bucket_versioning" "state_s3_bucket" {
 }
 
 resource "aws_dynamodb_table" "terraform-lock" {
-  name = "terraform_state"
+  name = data.aws_dynamodb_table.check_dynamodb_table_exist.arn ? null : "terraform_state"
   read_capacity = 5
   write_capacity = 5
   hash_key = "LockID"

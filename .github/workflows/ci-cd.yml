@@ -57,21 +57,21 @@ jobs:
           terraform_version: 1.8.5
           
 
-      #===================================================================#
-      # Terraform check if S3 and DynamoDB resources already exist
-      #===================================================================#
-      - name: Check if S3 Bucket & DynamoDB exist
-        id: check-s3-dynamodb
-        run: |
-          terraform init 
+      # #===================================================================#
+      # # Terraform check if S3 and DynamoDB resources already exist
+      # #===================================================================#
+      # - name: Check if S3 Bucket & DynamoDB exist
+      #   id: check-s3-dynamodb
+      #   run: |
+      #     terraform init 
 
-          terraform plan -target=data.aws_s3_bucket.check_s3_bucket_exist \
-          -target=aws_dynamodb_table.check_dynamodb_table_exist
+      #     terraform plan -target=data.aws_s3_bucket.check_s3_bucket_exist \
+      #     -target=aws_dynamodb_table.check_dynamodb_table_exist
 
-          terraform apply -target=data.aws_s3_bucket.check_s3_bucket_exist \
-          -target=aws_dynamodb_table.check_dynamodb_table_exist \
-          -auto-approve 
-        working-directory: infra/
+      #     terraform apply -target=data.aws_s3_bucket.check_s3_bucket_exist \
+      #     -target=aws_dynamodb_table.check_dynamodb_table_exist \
+      #     -auto-approve 
+      #   working-directory: infra/
         
         
       #===================================================================#
@@ -79,14 +79,7 @@ jobs:
       #===================================================================#
       - name: Terraform S3 & DynamoDB
         id: s3-dynamodb-init 
-        if: steps.check-s3-dynamodb.outputs.has_s3_bucket_name != ${{ env.BACKEND_S3_BUCKET}} && steps.check-s3-dynamodb.outputs.has_dynamodb_table_name != ${{ env.BACKEND_DYNAMODB_TABLE}}
         run: |
-        
-          echo "Checking condition if it works" \ 
-          echo ${{ steps.check-s3-dynamodb.outputs }} \
-          echo ${{ steps.check-s3-dynamodb.outputs.has_s3_bucket_name }} \ 
-          echo ${{ steps.check-s3-dynamodb.outputs.has_dynamodb_table_name }} \ 
-
           terraform init 
           
           terraform plan -target=aws_s3_bucket.state_s3_bucket \
