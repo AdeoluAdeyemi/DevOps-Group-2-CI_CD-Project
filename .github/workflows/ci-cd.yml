@@ -131,19 +131,19 @@ jobs:
       # Upload Terraform state file as an encrypted Github workflow 
       # artifact and downloads and decrypts the state on subsequent runs 
       #==================================================================#
-      - name: Encrypt and Upload Terraform state
-        # uses: devgioele/terraform-state-artifact@v4
-        # with:
-        #   passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
-        #   download_upload: upload
+      # - name: Encrypt and Upload Terraform state
+      #   # uses: devgioele/terraform-state-artifact@v4
+      #   # with:
+      #   #   passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
+      #   #   download_upload: upload
 
-        uses: badgerhobbs/terraform-state@v2
-        with:
-          encryption_key: ${{ secrets.TF_STATE_PASSPHRASE }}
-          operation: upload
-          location: artifact
-          directory: ./
-          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+      #   uses: badgerhobbs/terraform-state@v2
+      #   with:
+      #     encryption_key: ${{ secrets.TF_STATE_PASSPHRASE }}
+      #     operation: upload
+      #     location: artifact
+      #     directory: ./
+      #     github_token: ${{ secrets.GH_ACCESS_TOKEN }}
 
   # build:
   #   name: Build, tag, and push docker image
