@@ -67,7 +67,7 @@ jobs:
           echo "s3_bucket_versioning = \"${{ env.BACKEND_S3_BUCKET_VERSIONING }}\"" >> prod.tfvars
           echo "dynamodb_table_name = \"${{ env.BACKEND_DYNAMODB_TABLE }}\"" >> prod.tfvars
           echo "dynamodb_hash = \"${{ env.BACKEND_DYNAMODB_TABLE_HASH_KEY }}\"" >> prod.tfvars
-          cat tfvars.auto.tfvars
+          cat prod.tfvars
         working-directory: infra/s3-dynamodb-state/
       #================#
       # Terraform Plan 
