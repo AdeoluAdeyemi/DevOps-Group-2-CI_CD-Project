@@ -67,6 +67,7 @@ jobs:
           echo "dynamodb_table_name = \"${{ env.BACKEND_DYNAMODB_TABLE }}\"" >> tfvars.auto.
           echo "dynamodb_hash = \"${{ env.BACKEND_DYNAMODB_TABLE_HASH_KEY }}\"" >> tfvars.auto.tfvars
           cat tfvars.auto.tfvars
+        working-directory: infra/s3-dynamodb-state/
       #================#
       # Terraform Plan 
       #================#
