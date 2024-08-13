@@ -83,7 +83,7 @@ jobs:
         run: |
         
           echo "Checking condition if it works"
-          echo steps.check-s3-dynamodb.outputs.has_s3_bucket_name != ${{ env.BACKEND_S3_BUCKET}} && steps.check-s3-dynamodb.outputs.has_dynamodb_table_name != ${{ env.BACKEND_DYNAMODB_TABLE}}
+          echo ${{ steps.check-s3-dynamodb.outputs.has_s3_bucket_name }} != ${{ env.BACKEND_S3_BUCKET}} && ${{ steps.check-s3-dynamodb.outputs.has_dynamodb_table_name }} != ${{ env.BACKEND_DYNAMODB_TABLE}}
 
           terraform init 
           
