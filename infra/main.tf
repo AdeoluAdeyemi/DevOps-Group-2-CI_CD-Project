@@ -1,3 +1,13 @@
+# terraform {
+#   backend "s3" {
+#       bucket = "terraform-state-backend"
+#       key = "terraform.tfstate"
+#       region = "eu-west-2"
+#       dynamodb_table = "terraform_state"
+#   }
+# }
+
+
 provider "aws" {
   region = "eu-west-2"
 }
