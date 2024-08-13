@@ -81,23 +81,7 @@ jobs:
       #===================================================#
       - name: Terraform Plan
         id: plan
-        run: |
-          terraform plan -target=aws_vpc.tf_vpc_main \
-          -target=aws_subnet.tf_subnet_main \
-          -target=aws_subnet.tf_subnet_secondary \ 
-          -target=aws_internet_gateway.tf_gw \ 
-          -target=aws_route_table.tf_route_tb \
-          -target=aws_route_table_association.tf_rta \ 
-          -target=aws_route_table_association.tf_rtb \
-          -target=aws_security_group.tf_sg_main \
-          -target=aws_vpc_security_group_ingress_rule.http \
-          -target=aws_vpc_security_group_egress_rule.allow_all_traffic_ipv4 \
-          -target=aws_lb.tf_lb_test \ 
-          -target=aws_lb_target_group.tf_tg_main \
-          -target=aws_lb_listener.front_end \
-          -target=aws_ecr_repository.tf_govuk_fe_wtf_demo_ecr_repo \
-          -target=aws_ecr_lifecycle_policy.tf_private_ecr_life_pol \
-          -target=aws_ecs_cluster.tf_ecs_cluster -no-color
+        run: terraform plan -no-color
         working-directory: infra/
         continue-on-error: true
 
@@ -153,7 +137,6 @@ jobs:
             -backend-config='dynamodb_table=${{ env.BACKEND_DYNAMODB_TABLE }}' 
           terraform validate -no-color
         working-directory: infra/
-        continue-on-error: true
 
       # #====================================#
       # # Install docker and its dependencies
@@ -193,9 +176,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |
-          terraform plan -target=aws_ecs_task_definition.tf_task_def \ 
-          -target=aws_ecs_service.tf_govuk_service \ 
-          -no-color
+          terraform plan -no-color
         working-directory: infra/
         continue-on-error: true
 
