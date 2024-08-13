@@ -278,7 +278,7 @@ jobs:
       - name: Terraform Plan
         id: plan-build
         run: |
-          terraform plan  -var-file="prod.tfvars" -no-color
+          terraform plan  -var-file="prod.tfvars" -no-color -lock=false
         working-directory: infra/
         continue-on-error: true
 
@@ -293,7 +293,7 @@ jobs:
       - name: Terraform Apply
         id: apply-build
         working-directory: infra/
-        run: terraform apply  -var-file="prod.tfvars" -auto-approve
+        run: terraform apply  -var-file="prod.tfvars" -auto-approve -lock=false
         
       #============================================#
       # Add a comment to the pull request to indicate
