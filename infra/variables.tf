@@ -31,11 +31,15 @@ variable "aws_security_group_egress_cidr_block" {
   type = string
 }
 
-variable "availability_zones" {
+variable "availability_zone_a" {
   description = "AWS Availability Zones"
-  type = list(string)
+  type =string
 }
 
+variable "availability_zone_b" {
+  description = "AWS Availability Zones"
+  type = string
+}
 variable "port" {
   description = "Ports for all resources"
   type = number

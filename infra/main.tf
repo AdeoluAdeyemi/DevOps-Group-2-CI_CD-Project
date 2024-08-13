@@ -30,7 +30,7 @@ resource "aws_vpc" "tf_vpc_main" {
 resource "aws_subnet" "tf_subnet_main" {
   vpc_id     = aws_vpc.tf_vpc_main.id
   cidr_block = var.aws_subnet_main_cidr_block
-  availability_zone = var.availability_zones[0]
+  availability_zone = var.availability_zone_a
   map_public_ip_on_launch = true
 
   tags = {
@@ -41,7 +41,7 @@ resource "aws_subnet" "tf_subnet_main" {
 resource "aws_subnet" "tf_subnet_secondary" {
   vpc_id     = aws_vpc.tf_vpc_main.id
   cidr_block = var.aws_subnet_secondary_cidr_block
-  availability_zone = var.availability_zones[1]
+  availability_zone = var.availability_zone_b
   map_public_ip_on_launch = true
 
   tags = {
