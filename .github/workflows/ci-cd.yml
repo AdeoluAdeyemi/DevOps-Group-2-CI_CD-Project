@@ -120,7 +120,7 @@ jobs:
           echo "aws_route_table_cidr_block = \"${{ env.VPC_SUBNET_ROUTE_TABLE_CIDR }}\"" >> prod.tfvars
           echo "aws_security_group_ingress_cidr_block = \"${{ env.VPC_SECURITY_GROUP_INGRESS_CIDR }}\"" >> prod.tfvars
           echo "aws_security_group_egress_cidr_block = \"${{ env.VPC_SECURITY_GROUP_EGRESS_CIDR }}\"" >> prod.tfvars
-          echo "availability_zones = \"[${{ env.VPC_SUBNET_AVAILABILITY_ZONE_1 }}, ${{ env.VPC_SUBNET_AVAILABILITY_ZONE_2 }}]\"" >> prod.tfvars
+          echo "availability_zones = \"['${{ env.VPC_SUBNET_AVAILABILITY_ZONE_1 }}', '${{ env.VPC_SUBNET_AVAILABILITY_ZONE_2 }}' ]\"" >> prod.tfvars
           echo "port = \"${{ env.PORT }}\"" >> prod.tfvars
           echo "aws_elb_name = \"${{ env.AWS_ELB_NAME }}\"" >> prod.tfvars
           echo "aws_elb_target_group_name = \"${{ env.AWS_ELB_TARGET_GROUP }}\"" >> prod.tfvars
