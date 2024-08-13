@@ -57,21 +57,15 @@ jobs:
           terraform_version: 1.8.5
           
 
-      # #===================================================================#
-      # # Terraform check if S3 and DynamoDB resources already exist
-      # #===================================================================#
-      # - name: Check if S3 Bucket & DynamoDB exist
-      #   id: check-s3-dynamodb
-      #   run: |
-      #     terraform init 
-
-      #     terraform plan -target=data.aws_s3_bucket.check_s3_bucket_exist \
-      #     -target=aws_dynamodb_table.check_dynamodb_table_exist
-
-      #     terraform apply -target=data.aws_s3_bucket.check_s3_bucket_exist \
-      #     -target=aws_dynamodb_table.check_dynamodb_table_exist \
-      #     -auto-approve 
-      #   working-directory: infra/
+      #===================================================================#
+      # Store your Terraform state file as an encrypted Github workflow 
+      # artifact and downloads and decrypts the state on subsequent runs.
+      #===================================================================#
+      - name: Download Terraform state
+        uses: devgioele/terraform-state-artifact@v4
+        with:
+          passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
+          download_upload: download
         
         
       #===================================================================#
@@ -132,6 +126,15 @@ jobs:
         working-directory: infra/
         run: terraform apply -auto-approve
 
+      #==================================================================#
+      # Upload Terraform state file as an encrypted Github workflow 
+      # artifact and downloads and decrypts the state on subsequent runs 
+      #==================================================================#
+      - name: Upload Terraform state
+        uses: devgioele/terraform-state-artifact@v4
+        with:
+          passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
+          download_upload: upload
 
   build:
     name: Build, tag, and push docker image
@@ -145,6 +148,18 @@ jobs:
       #====================================#
       - name: Checkout repository
         uses: actions/checkout@v4
+
+          
+
+      #===================================================================#
+      # Store your Terraform state file as an encrypted Github workflow 
+      # artifact and downloads and decrypts the state on subsequent runs.
+      #===================================================================#
+      - name: Download Terraform state
+        uses: devgioele/terraform-state-artifact@v4
+        with:
+          passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
+          download_upload: download
 
 
       #====================================#
@@ -280,3 +295,14 @@ jobs:
         #       repo: context.repo.repo,
         #       body: output
         #     })
+
+    
+      #==================================================================#
+      # Upload Terraform state file as an encrypted Github workflow 
+      # artifact and downloads and decrypts the state on subsequent runs 
+      #==================================================================#
+      - name: Upload Terraform state
+        uses: devgioele/terraform-state-artifact@v4
+        with:
+          passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
+          download_upload: upload
