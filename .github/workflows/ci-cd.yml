@@ -71,6 +71,7 @@ jobs:
           -target=aws_s3_bucket_versioning.state_s3_bucket \
           -target=aws_dynamodb_table.terraform-lock \
           -auto-approve -no-color 
+        working-directory: infra/
 
       #====================================================================#
       # Terraform Init and Validate. Use S3 and DynamoDB to manage TF State
