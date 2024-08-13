@@ -62,6 +62,7 @@ jobs:
       - name: Generate tfvars file
         id: tfvars
         run: |
+          touch prod.tfvars
           echo "s3_bucket_name = \"${{ env.BACKEND_S3_BUCKET }}\"" >> prod.tfvars
           echo "s3_bucket_versioning = \"${{ env.BACKEND_S3_BUCKET_VERSIONING }}\"" >> prod.tfvars
           echo "dynamodb_table_name = \"${{ env.BACKEND_DYNAMODB_TABLE }}\"" >> prod.tfvars
