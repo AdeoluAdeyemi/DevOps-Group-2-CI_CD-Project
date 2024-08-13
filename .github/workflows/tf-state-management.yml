@@ -1,0 +1,87 @@
+name: Workflow to create S3 bucket and DynamoDB for TF State Management
+
+on:
+  workflow_dispatch:
+
+
+env:
+  AWS_REGION: eu-west-2                   # set this to your preferred AWS region, e.g. us-west-1
+  BACKEND_S3_BUCKET: govuk-fe-demo-terraform-state-backend
+  BACKEND_S3_BUCKET_VERSIONING: Enabled
+  BACKEND_DYNAMODB_TABLE: terraform_state
+  BACKEND_DYNAMODB_TABLE_HASH_KEY: LockID     
+
+
+jobs:
+  create_s3_dynamodb:
+    name: Create AWS Infrastructure
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      #====================================#
+      # Checkout repository into runner
+      #====================================#
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+
+      #====================================#
+      # Configure AWS credentials
+      #====================================#
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      
+      #======================================#
+      # Install Terraform and its dependencies
+      #======================================#
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3.1.1
+        with:
+          terraform_version: 1.8.5
+          
+
+      #=============================#
+      # Terraform Init and Validate.
+      #=============================#
+      - name: Terraform Init
+        id: init
+        run: |
+          terraform init   
+          terraform validate -no-color
+        working-directory: infra/s3-dynamodb-state/
+
+
+      #================#
+      # Terraform Plan 
+      #================#
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -no-color -var="s3_bucket_name=${{ env.BACKEND_S3_BUCKET }}" \
+          -var="s3_bucket_versioning=${{ env.BACKEND_S3_BUCKET_VERSIONING }}" \
+          -var="dynamodb_table_name=${{ env.BACKEND_DYNAMODB_TABLE }}" \
+          -var="dynamodb_hash=${{ env.BACKEND_DYNAMODB_TABLE_HASH_KEY }}"
+        working-directory: infra/s3-dynamodb-state/
+        continue-on-error: true
+
+
+      #=========================================#
+      # Terraform Apply Infrastructure Creation
+      #=========================================#
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        id: apply
+        working-directory: infra/s3-dynamodb-state/
+        run: terraform apply -no-color -var="s3_bucket_name=${{ env.BACKEND_S3_BUCKET }}" \
+          -var="s3_bucket_versioning=${{ env.BACKEND_S3_BUCKET_VERSIONING }}" \
+          -var="dynamodb_table_name=${{ env.BACKEND_DYNAMODB_TABLE }}" \
+          -var="dynamodb_hash=${{ env.BACKEND_DYNAMODB_TABLE_HASH_KEY }}" -auto-approve

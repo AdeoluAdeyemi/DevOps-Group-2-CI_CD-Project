@@ -1,11 +1,17 @@
-# terraform {
-#   backend "s3" {
-#       bucket = "terraform-state-backend"
-#       key = "terraform.tfstate"
-#       region = "eu-west-2"
-#       dynamodb_table = "terraform_state"
-#   }
-# }
+terraform {
+  backend "s3" {
+      bucket = "govuk-fe-demo-terraform-state-backend"
+      key = "terraform.tfstate"
+      region = "eu-west-2"
+      dynamodb_table = "terraform_state"    
+
+      # bucket = var.aws_bucket_name
+      # key = var.state_key
+      # region = var.aws_region
+      # dynamodb_table = var.dynamodb_table
+  }
+  
+}
 
 
 provider "aws" {
