@@ -14,7 +14,7 @@ env:
 
 jobs:
   create_s3_dynamodb:
-    name: Create AWS Infrastructure
+    name: Create S3 and Dynamodb Resources
     
     runs-on: ubuntu-latest
 
