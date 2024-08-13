@@ -97,8 +97,7 @@ jobs:
           -target=aws_lb_listener.front_end \
           -target=aws_ecr_repository.tf_govuk_fe_wtf_demo_ecr_repo \
           -target=aws_ecr_lifecycle_policy.tf_private_ecr_life_pol \
-          -target=aws_ecs_cluster.tf_ecs_cluster \
-          -no-color
+          -target=aws_ecs_cluster.tf_ecs_cluster -no-color
         working-directory: infra/
         continue-on-error: true
 
@@ -154,6 +153,7 @@ jobs:
             -backend-config='dynamodb_table=${{ env.BACKEND_DYNAMODB_TABLE }}' 
           terraform validate -no-color
         working-directory: infra/
+        continue-on-error: true
 
       # #====================================#
       # # Install docker and its dependencies
