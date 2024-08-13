@@ -72,7 +72,9 @@ jobs:
           -target=aws_dynamodb_table.check_dynamodb_table_exist \
           -auto-approve 
         working-directory: infra/
-
+        
+          echo "Checking condition if it works"
+          echo steps.check-s3-dynamodb.outputs.has_s3_bucket_name != ${{ env.BACKEND_S3_BUCKET}} && steps.check-s3-dynamodb.outputs.has_dynamodb_table_name != ${{ env.BACKEND_DYNAMODB_TABLE}}
 
       #===================================================================#
       # Terraform Create S3 and DynamoDB resources for TF state management
