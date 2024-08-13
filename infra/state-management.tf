@@ -23,15 +23,15 @@ resource "aws_s3_bucket" "state_s3_bucket" {
 }
 
 resource "aws_s3_bucket_versioning" "state_s3_bucket" {
-  count = (data.aws_s3_bucket.check_s3_bucket_exist.id == "terraform_state") ? 0 : 1
-  bucket = aws_s3_bucket.state_s3_bucket[0].id
+  count = (data.aws_s3_bucket.check_s3_bucket_exist.id == "govuk-fe-demo-terraform-state-backend") ? 0 : 1
+  bucket = (data.aws_s3_bucket.check_s3_bucket_exist.id == "govuk-fe-demo-terraform-state-backend") ? null : data.aws_s3_bucket.check_s3_bucket_exist.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
 resource "aws_dynamodb_table" "terraform-lock" {
-  count = (data.aws_dynamodb_table.check_dynamodb_table_exist.arn) ? 0 : 1
+  count = (data.aws_s3_bucket.check_s3_bucket_exist.id == "terraform_state") ? 0 : 1
   name = "terraform_state"
   read_capacity = 5
   write_capacity = 5
