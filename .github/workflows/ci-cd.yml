@@ -35,7 +35,7 @@ jobs:
       # Checkout repository into runner
       #====================================#
       - name: Checkout repository
-        uses: actions/checkout@v4.17
+        uses: actions/checkout@v4
 
 
       #====================================#
@@ -127,7 +127,7 @@ jobs:
       # Checkout repository into runner
       #====================================#
       - name: Checkout repository
-        uses: actions/checkout@v4.17
+        uses: actions/checkout@v4
 
       #======================================#
       # Install Terraform and its dependencies
