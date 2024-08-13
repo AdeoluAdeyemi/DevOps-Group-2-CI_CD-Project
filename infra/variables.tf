@@ -75,8 +75,3 @@ variable "aws_ecs_task_df_container_name" {
   description = "AWS ECS Task Definition Container Name"
   type = string
 }
-
-variable "s3_bucket_name" {
-  description = "Name of S3 bucket"
-  type = string
-}
