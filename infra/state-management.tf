@@ -24,7 +24,7 @@ resource "aws_s3_bucket" "state_s3_bucket" {
 
 resource "aws_s3_bucket_versioning" "state_s3_bucket" {
   count = (data.aws_s3_bucket.check_s3_bucket_exist.arn) ? 0 : 1
-  bucket = aws_s3_bucket.state_s3_bucket.id
+  bucket = aws_s3_bucket.state_s3_bucket[0].id
   versioning_configuration {
     status = "Enabled"
   }
