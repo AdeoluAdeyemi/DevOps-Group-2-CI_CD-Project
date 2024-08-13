@@ -55,11 +55,29 @@ jobs:
         uses: hashicorp/setup-terraform@v3.1.1
         with:
           terraform_version: 1.8.5
+          
+
+      #===================================================================#
+      # Terraform check if S3 and DynamoDB resources already exist
+      #===================================================================#
+      - name: Check if S3 Bucket & DynamoDB exist
+        id: check-s3-dynamodb
+        run: |
+          terraform init 
+
+          terraform plan -target=data.aws_s3_bucket.check_s3_bucket_exist \
+          -target=aws_dynamodb_table.check_dynamodb_table_exist
+
+          terraform apply -target=data.aws_s3_bucket.check_s3_bucket_exist \
+          -target=aws_dynamodb_table.check_dynamodb_table_exist
+
 
       #===================================================================#
       # Terraform Create S3 and DynamoDB resources for TF state management
       #===================================================================#
       - name: Terraform S3 & DynamoDB
+        id: s3-dynamodb-init 
+        if: steps.check-s3-dynamodb.outputs.has_s3_bucket_name != ${{ env.BACKEND_S3_BUCKET}} && steps.check-s3-dynamodb.outputs.has_dynamodb_table_name != ${{ env.BACKEND_DYNAMODB_TABLE}}
         run: |
           terraform init 
           

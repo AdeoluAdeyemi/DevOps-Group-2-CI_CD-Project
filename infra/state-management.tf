@@ -1,3 +1,11 @@
+data "aws_s3_bucket" "check_s3_bucket_exist" {
+  bucket = "govuk-fe-demo-terraform-state-backend"
+}
+
+data "aws_dynamodb_table" "check_dynamodb_table_exist" {
+  name = "terraform_state"
+}
+
 resource "aws_s3_bucket" "state_s3_bucket" {
   bucket = "govuk-fe-demo-terraform-state-backend"
   object_lock_enabled = true
