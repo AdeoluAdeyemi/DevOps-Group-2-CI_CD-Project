@@ -61,7 +61,7 @@ jobs:
       #===================================================================#
       - name: Terraform S3 & DynamoDB
         run: |
-          terraform init -backend-config='skip_credentials_validation=true' 
+          terraform init -upgrade -reconfigure -backend-config='skip_region_validation=true' 
           
           terraform plan -target=aws_s3_bucket.state_s3_bucket \
           -target=aws_s3_bucket_versioning.state_s3_bucket \
