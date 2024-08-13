@@ -1,11 +1,12 @@
 terraform {
+
   backend "s3" {
-      bucket = var.s3_bucket_name
-      key = "terraform.tfstate"
-      region = var.aws_region
-      dynamodb_table = var.dynamodb_table_name   
+    bucket = "govuk-fe-demo-terraform-state-backend"
+    key = "terraform.tfstate"
+    region = "eu-west-2"
+    dynamodb_table = "terraform_state"
   }
-  
+
 }
 
 
