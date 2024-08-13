@@ -57,24 +57,24 @@ jobs:
           terraform_version: 1.8.5
           
 
-      #===================================================================#
-      # Store your Terraform state file as an encrypted Github workflow 
-      # artifact and downloads and decrypts the state on subsequent runs.
-      #===================================================================#
-      - name: Download Terraform state
-        # uses: devgioele/terraform-state-artifact@v4
-        # with:
-        #   passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
-        #   download_upload: download
+      # #===================================================================#
+      # # Store your Terraform state file as an encrypted Github workflow 
+      # # artifact and downloads and decrypts the state on subsequent runs.
+      # #===================================================================#
+      # - name: Download Terraform state
+      #   # uses: devgioele/terraform-state-artifact@v4
+      #   # with:
+      #   #   passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
+      #   #   download_upload: download
 
-        uses: badgerhobbs/terraform-state@v2
-        with:
-          encryption_key: ${{ secrets.TF_STATE_PASSPHRASE }}
-          operation: download
-          location: artifact
-          directory: ./
-          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
-        continue-on-error: true
+      #   uses: badgerhobbs/terraform-state@v2
+      #   with:
+      #     encryption_key: ${{ secrets.TF_STATE_PASSPHRASE }}
+      #     operation: download
+      #     location: artifact
+      #     directory: ./
+      #     github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+      #   continue-on-error: true
         
       # #===================================================================#
       # # Terraform Create S3 and DynamoDB resources for TF state management
@@ -145,38 +145,40 @@ jobs:
           directory: ./
           github_token: ${{ secrets.GH_ACCESS_TOKEN }}
 
-  build:
-    name: Build, tag, and push docker image
+  # build:
+  #   name: Build, tag, and push docker image
 
-    runs-on: ubuntu-latest
-    needs: create
+  #   runs-on: ubuntu-latest
+  #   needs: create
 
-    steps:
-      #====================================#
-      # Checkout repository into runner
-      #====================================#
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  #   steps:
 
 
-      #===================================================================#
-      # Store your Terraform state file as an encrypted Github workflow 
-      # artifact and downloads and decrypts the state on subsequent runs.
-      #===================================================================#
-      - name: Download Terraform state
-        # uses: devgioele/terraform-state-artifact@v4
-        # with:
-        #   passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
-        #   download_upload: download
+      # #====================================#
+      # # Checkout repository into runner
+      # #====================================#
+      # - name: Checkout repository
+      #   uses: actions/checkout@v4
 
-        uses: badgerhobbs/terraform-state@v2
-        with:
-          encryption_key: ${{ secrets.TF_STATE_PASSPHRASE }}
-          operation: download
-          location: artifact
-          directory: ./
-          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
-        continue-on-error: true
+
+      # #===================================================================#
+      # # Store your Terraform state file as an encrypted Github workflow 
+      # # artifact and downloads and decrypts the state on subsequent runs.
+      # #===================================================================#
+      # - name: Download Terraform state
+      #   # uses: devgioele/terraform-state-artifact@v4
+      #   # with:
+      #   #   passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
+      #   #   download_upload: download
+
+      #   uses: badgerhobbs/terraform-state@v2
+      #   with:
+      #     encryption_key: ${{ secrets.TF_STATE_PASSPHRASE }}
+      #     operation: download
+      #     location: artifact
+      #     directory: ./
+      #     github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+      #   continue-on-error: true
 
       #====================================#
       # Configure AWS credentials
@@ -188,23 +190,23 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      #======================================#
-      # Install Terraform and its dependencies
-      #======================================#
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3.1.1
-        with:
-          terraform_version: 1.8.5
+      # #======================================#
+      # # Install Terraform and its dependencies
+      # #======================================#
+      # - name: Setup Terraform
+      #   uses: hashicorp/setup-terraform@v3.1.1
+      #   with:
+      #     terraform_version: 1.8.5
 
-      #=============================#
-      # Terraform Init and Validate
-      #=============================#
-      - name: Terraform Init
-        id: init
-        run: |
-          terraform init 
-          terraform validate -no-color
-        working-directory: infra/
+      # #=============================#
+      # # Terraform Init and Validate
+      # #=============================#
+      # - name: Terraform Init
+      #   id: init
+      #   run: |
+      #     terraform init 
+      #     terraform validate -no-color
+      #   working-directory: infra/
 
       #========================================#
       # Build docker image 
@@ -234,7 +236,7 @@ jobs:
       # and Service
       #========================================#      
       - name: Terraform Plan
-        id: plan
+        id: plan-build
         run: |
           terraform plan -no-color
         working-directory: infra/
@@ -245,11 +247,11 @@ jobs:
       # Terraform Apply Infrastructure Creation
       #===================================================#
       - name: Terraform Plan Status
-        if: steps.plan.outcome == 'failure'
+        if: steps.plan-build.outcome == 'failure'
         run: exit 1
 
       - name: Terraform Apply
-        id: apply
+        id: apply-build
         working-directory: infra/
         run: terraform apply -auto-approve
         
@@ -297,20 +299,20 @@ jobs:
         #     })
 
     
-      #==================================================================#
-      # Upload Terraform state file as an encrypted Github workflow 
-      # artifact and downloads and decrypts the state on subsequent runs 
-      #==================================================================#
-      - name: Encrypt and Upload Terraform state
-        # uses: devgioele/terraform-state-artifact@v4
-        # with:
-        #   passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
-        #   download_upload: upload
+      # #==================================================================#
+      # # Upload Terraform state file as an encrypted Github workflow 
+      # # artifact and downloads and decrypts the state on subsequent runs 
+      # #==================================================================#
+      # - name: Encrypt and Upload Terraform state
+      #   # uses: devgioele/terraform-state-artifact@v4
+      #   # with:
+      #   #   passphrase: ${{ secrets.TF_STATE_PASSPHRASE }}
+      #   #   download_upload: upload
 
-        uses: badgerhobbs/terraform-state@v2
-        with:
-          encryption_key: ${{ secrets.TF_STATE_PASSPHRASE }}
-          operation: upload
-          location: artifact
-          directory: ./
-          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+      #   uses: badgerhobbs/terraform-state@v2
+      #   with:
+      #     encryption_key: ${{ secrets.TF_STATE_PASSPHRASE }}
+      #     operation: upload
+      #     location: artifact
+      #     directory: ./
+      #     github_token: ${{ secrets.GH_ACCESS_TOKEN }}
