@@ -152,7 +152,7 @@ jobs:
       #===================================================#
       - name: Terraform Plan
         id: plan
-        run: terraform plan  -var-file="prod.tfvars" -no-color
+        run: terraform plan  -var-file="prod.tfvars" -no-color -lock=false
         working-directory: infra/
         continue-on-error: true
 
@@ -167,7 +167,7 @@ jobs:
       - name: Terraform Apply
         id: apply
         working-directory: infra/
-        run: terraform apply  -var-file="prod.tfvars" -auto-approve
+        run: terraform apply  -var-file="prod.tfvars" -auto-approve -lock=false
 
       #==================================================================#
       # Upload Terraform state file as an encrypted Github workflow 
