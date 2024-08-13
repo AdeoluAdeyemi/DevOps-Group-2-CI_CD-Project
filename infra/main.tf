@@ -303,7 +303,7 @@ resource "aws_ecs_task_definition" "tf_task_def" {
   container_definitions    = jsonencode([
     {
       name      = var.aws_ecs_task_df_container_name
-      image     = "${data.aws_ecr_repository.repo_details.repository_url}/${var.aws_ecr_repo_name}:latest"
+      image     = "${data.aws_ecr_repository.repo_details.repository_url}:latest"
       cpu       = 1024
       memory    = 2048
       essential = true
