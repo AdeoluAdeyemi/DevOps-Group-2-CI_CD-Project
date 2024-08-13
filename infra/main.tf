@@ -296,7 +296,7 @@ resource "aws_ecs_task_definition" "tf_task_def" {
   container_definitions    = jsonencode([
     {
       name      = "govuk-fe-wtf-demo"
-      image     = "637423624556.dkr.ecr.us-west-1.amazonaws.com/tf_govuk_fe_wtf_demo_ecr_repo:latest"
+      image     = "637423624556.dkr.ecr.eu-west-2.amazonaws.com/tf_govuk_fe_wtf_demo_ecr_repo:latest"
       cpu       = 1024
       memory    = 2048
       essential = true
