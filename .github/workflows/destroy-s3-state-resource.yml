@@ -77,6 +77,6 @@ jobs:
       - name: Terraform Destroy
         id: destroy
         run: |
-          terraform destroy -no-color -var-file="prod.tfvars"
+          terraform destroy -no-color -var-file="prod.tfvars" -auto-approve -lock=false
         working-directory: infra/s3-dynamodb-state/
         continue-on-error: true
