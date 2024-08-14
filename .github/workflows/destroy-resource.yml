@@ -92,5 +92,6 @@ jobs:
       #=============================#
       - name: Terraform Destroy
         id: destroy
-        run: terraform destroy -var-file="prod.tfvars" -lock=false -no-color
+        run: terraform destroy -var-file="prod.tfvars" -lock=false -no-color -auto-approve -lock=false
         working-directory: infra/
+        continue-on-error: true
