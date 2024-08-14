@@ -109,7 +109,7 @@ jobs:
       #=============================#
       # Terraform Validate.
       #=============================#
-      - name: Terraform Init
+      - name: Terraform Validate
         id: validate
         run: terraform validate -no-color
         working-directory: infra/
@@ -175,7 +175,7 @@ jobs:
       - name: Terraform Format
         id: fmt
         run: |
-          terraform format -no-color -lock=false
+          terraform fmt -no-color -lock=false
         working-directory: infra/
         continue-on-error: true
 
