@@ -1,0 +1,44 @@
+name: Destroy AWS Resource
+
+on:
+  workflow_dispatch:
+
+jobs:
+  destroy-resource:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      # Configure AWS credentials
+      #====================================#
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      #======================================#
+      # Install Terraform and its dependencies
+      #======================================#
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3.1.1
+        with:
+          terraform_version: 1.8.5
+
+      #=============================#
+      # Terraform Init
+      #=============================#
+      - name: Terraform Init
+        id: init
+        run: terraform init   
+        working-directory: infra/
+
+        
+      #=============================#
+      # Terraform Validate.
+      #=============================#
+      - name: Terraform Destroy
+        id: destroy
+        run: terraform destroy -no-color
+        working-directory: infra/
