@@ -42,5 +42,5 @@ jobs:
       #=============================#
       - name: Terraform Destroy
         id: destroy
-        run: terraform destroy -no-color
+        run: terraform destroy -lock=false -no-color
         working-directory: infra/
