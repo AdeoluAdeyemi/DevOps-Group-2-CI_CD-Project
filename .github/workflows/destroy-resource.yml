@@ -3,6 +3,9 @@ name: Destroy AWS Resource
 on:
   workflow_dispatch:
 
+env:
+  AWS_REGION: eu-west-2
+
 jobs:
   destroy-resource:
     runs-on: ubuntu-latest
