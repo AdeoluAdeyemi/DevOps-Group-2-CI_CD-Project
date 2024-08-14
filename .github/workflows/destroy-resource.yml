@@ -49,7 +49,7 @@ jobs:
         with:
           terraform_version: 1.8.5
 
-                #================================#
+      #================================#
       # Dynamically create tfvars file
       #================================#
       - name: Generate tfvars file
