@@ -331,6 +331,8 @@ resource "aws_ecs_service" "tf_govuk_service" {
   launch_type = "FARGATE"
   platform_version = "LATEST"
   desired_count   = 2
+  force_delete = true
+  
   network_configuration {
     security_groups    = [aws_security_group.tf_sg_main.id]
     subnets = [aws_subnet.tf_subnet_main.id, aws_subnet.tf_subnet_secondary.id]
