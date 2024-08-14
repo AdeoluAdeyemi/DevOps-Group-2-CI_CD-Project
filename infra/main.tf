@@ -1,12 +1,10 @@
 terraform {
-
   backend "s3" {
     bucket = "govuk-fe-demo-terraform-state-backend"
     key = "terraform.tfstate"
     region = "eu-west-2"
     dynamodb_table = "terraform_state"
   }
-
 }
 
 
