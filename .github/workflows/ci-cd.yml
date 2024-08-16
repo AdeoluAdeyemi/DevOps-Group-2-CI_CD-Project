@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
 
 env:
-  AWS_REGION: eu-west-2                   # set this to your preferred AWS region, e.g. us-west-1
-  ECR_REPOSITORY: tf_govuk_fe_wtf_demo_ecr_repo           # set this to your Amazon ECR repository name
+  AWS_REGION: eu-west-2                   
+  ECR_REPOSITORY: tf_govuk_fe_wtf_demo_ecr_repo
   DOCKER_BUILD_DIR: ./
   DOCKER_FILE: Dockerfile
 
