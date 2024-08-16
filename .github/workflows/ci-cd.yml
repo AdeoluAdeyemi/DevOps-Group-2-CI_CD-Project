@@ -35,7 +35,7 @@ env:
 #Jobs
 jobs:
   create:
-    name: Create AWS Infrastructure
+    name: Create AWS Infrastructure with TF
     defaults:
       run:
         shell: bash
@@ -136,7 +136,21 @@ jobs:
         id: apply
         working-directory: infra/
         run: terraform apply  -var-file="prod.tfvars" -auto-approve -lock=false
+  
+  build:      
+    name: Build, tag, and push docker image
 
+    runs-on: ubuntu-latest
+    needs: create
+
+    steps:
+      #====================================#
+      # Checkout repository into runner
+      #====================================#
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+        
       #====================================#
       # Configure AWS credentials
       #====================================#
