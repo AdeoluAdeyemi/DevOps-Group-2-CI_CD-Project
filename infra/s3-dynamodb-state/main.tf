@@ -51,9 +51,6 @@ resource "aws_iam_policy" "dynamodb_pol" {
         {
           "Sid" : "DyanmoDBAccess",
           "Effect" : "Allow",
-          "Principal" : {
-            "AWS" : data.aws_iam_user.user.arn
-          },
           "Action" : [
             "dynamodb:BatchGetItem",
             "dynamodb:BatchWriteItem",
