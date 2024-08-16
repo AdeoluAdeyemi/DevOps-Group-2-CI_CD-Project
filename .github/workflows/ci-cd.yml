@@ -1,4 +1,4 @@
-name: Continuous Integration for Python Flask app
+name: CI-CD Workflow
 
 #Events
 on:

@@ -1,4 +1,4 @@
-name: Workflow to create S3 bucket and DynamoDB for TF State Management
+name: Create S3 & DynamoDB for TF
 
 on:
   workflow_dispatch:
