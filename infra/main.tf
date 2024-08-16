@@ -305,8 +305,8 @@ resource "aws_ecs_service" "tf_govuk_service" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.tf_tg_main.arn
-    container_name   = var.aws_ecs_task_df_container_name
-    container_port   = var.port
+    container_name   = "govuk-fe-wtf-demo"
+    container_port   = 80
   }
 }
 
