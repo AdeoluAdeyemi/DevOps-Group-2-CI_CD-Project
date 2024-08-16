@@ -1,4 +1,4 @@
-name: Workflow to destroy S3 bucket and DynamoDB for TF State Management
+name: Destroy S3 bucket and DynamoDB for TF State Management
 
 on:
   workflow_dispatch:
