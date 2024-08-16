@@ -1,4 +1,4 @@
-name: Continuous Integration for Python Flask app
+name: CI-CD Workflow
 
 #Events
 on:
@@ -9,28 +9,10 @@ on:
   workflow_dispatch:
 
 env:
-  AWS_REGION: eu-west-2                   # set this to your preferred AWS region, e.g. us-west-1
-  ECR_REPOSITORY: tf_govuk_fe_wtf_demo_ecr_repo           # set this to your Amazon ECR repository name
-  ECS_SERVICE: tf_govuk_service                 # set this to your Amazon ECS service name
-  ECS_CLUSTER: tf_ecs_cluster                 # set this to your Amazon ECS cluster name
-  ECS_TASK_DEFINITION: tf_task_def # set this to the path to your Amazon ECS task definition
-  CONTAINER_NAME: govuk-fe-wtf-demo           # set this to the name of the container in the
+  AWS_REGION: eu-west-2                   
+  ECR_REPOSITORY: tf_govuk_fe_wtf_demo_ecr_repo
   DOCKER_BUILD_DIR: ./
   DOCKER_FILE: Dockerfile
-  BACKEND_S3_BUCKET: govuk-fe-demo-terraform-state-backend
-  BACKEND_DYNAMODB_TABLE: terraform_state
-  VPC_CIDR_BLOCK: "10.0.0.0/16"
-  VPC_SUBNET_MAIN: "10.0.1.0/24"
-  VPC_SUBNET_SECONDARY: "10.0.2.0/24"
-  VPC_SUBNET_AVAILABILITY_ZONE_1: "eu-west-2a"
-  VPC_SUBNET_AVAILABILITY_ZONE_2: "eu-west-2c"
-  VPC_GATEWAY_ID: "vgw-062345678"
-  VPC_SUBNET_ROUTE_TABLE_CIDR: "0.0.0.0/0"
-  VPC_SECURITY_GROUP_INGRESS_CIDR: "0.0.0.0/0"
-  VPC_SECURITY_GROUP_EGRESS_CIDR: "0.0.0.0/0"
-  PORT: 80
-  AWS_ELB_NAME: "tf-lb-test"
-  AWS_ELB_TARGET_GROUP: "tf-tg-main"
 
 #Jobs
 jobs:
@@ -48,7 +30,6 @@ jobs:
       #====================================#
       - name: Checkout repository
         uses: actions/checkout@v4
-
 
       #====================================#
       # Configure AWS credentials
@@ -77,22 +58,7 @@ jobs:
         run: |
           touch prod.tfvars
           echo "aws_region = \"${{ env.AWS_REGION }}\"" >> prod.tfvars
-          echo "aws_vpc_cidr_block = \"${{ env.VPC_CIDR_BLOCK }}\"" >> prod.tfvars
-          echo "aws_subnet_main_cidr_block = \"${{ env.VPC_SUBNET_MAIN }}\"" >> prod.tfvars
-          echo "aws_subnet_secondary_cidr_block = \"${{ env.VPC_SUBNET_SECONDARY }}\"" >> prod.tfvars
-          echo "aws_route_table_cidr_block = \"${{ env.VPC_SUBNET_ROUTE_TABLE_CIDR }}\"" >> prod.tfvars
-          echo "aws_security_group_ingress_cidr_block = \"${{ env.VPC_SECURITY_GROUP_INGRESS_CIDR }}\"" >> prod.tfvars
-          echo "aws_security_group_egress_cidr_block = \"${{ env.VPC_SECURITY_GROUP_EGRESS_CIDR }}\"" >> prod.tfvars
-          echo "availability_zone_a = \"${{ env.VPC_SUBNET_AVAILABILITY_ZONE_1 }}\"" >> prod.tfvars
-          echo "availability_zone_b = \"${{ env.VPC_SUBNET_AVAILABILITY_ZONE_2 }}\"" >> prod.tfvars
-          echo "port = \"${{ env.PORT }}\"" >> prod.tfvars
-          echo "aws_elb_name = \"${{ env.AWS_ELB_NAME }}\"" >> prod.tfvars
-          echo "aws_elb_target_group_name = \"${{ env.AWS_ELB_TARGET_GROUP }}\"" >> prod.tfvars
           echo "aws_ecr_repo_name = \"${{ env.ECR_REPOSITORY }}\"" >> prod.tfvars
-          echo "aws_ecs_cluster_name = \"${{ env.ECS_CLUSTER }}\"" >> prod.tfvars
-          echo "aws_ecs_name = \"${{ env.ECS_SERVICE }}\"" >> prod.tfvars
-          echo "aws_task_def = \"${{ env.ECS_TASK_DEFINITION }}\"" >> prod.tfvars
-          echo "aws_ecs_task_df_container_name = \"${{ env.CONTAINER_NAME }}\"" >> prod.tfvars
 
           cat prod.tfvars
         working-directory: infra/
@@ -105,7 +71,6 @@ jobs:
         run: terraform init   
         working-directory: infra/
 
-        
       #=============================#
       # Terraform Validate.
       #=============================#
@@ -114,16 +79,14 @@ jobs:
         run: terraform validate -no-color
         working-directory: infra/
 
-
       #===================================================#
       # Terraform Plan AWS VPC, & Other Resources Creation
       #===================================================#
       - name: Terraform Plan
         id: plan
-        run: terraform plan  -var-file="prod.tfvars" -no-color -lock=false
+        run: terraform plan  -var-file="prod.tfvars" -no-color
         working-directory: infra/
         continue-on-error: true
-
 
       #===================================================#
       # Terraform Apply Infrastructure Creation
@@ -135,7 +98,7 @@ jobs:
       - name: Terraform Apply
         id: apply
         working-directory: infra/
-        run: terraform apply  -var-file="prod.tfvars" -auto-approve -lock=false
+        run: terraform apply  -var-file="prod.tfvars" -auto-approve
   
   build:      
     name: Build, tag, and push docker image
@@ -150,7 +113,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-        
       #====================================#
       # Configure AWS credentials
       #====================================#
@@ -183,46 +145,10 @@ jobs:
           echo "image_tag=$IMAGE_TAG" 
           echo "full_image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-      #========================================#
-      # Format TF configuration file
-      #========================================#      
-      - name: Terraform Format
-        id: fmt
-        run: |
-          terraform fmt -no-color -lock=false
-        working-directory: infra/
-        continue-on-error: true
-
-
-      #========================================#
-      # Create ECS Cluster, Task Definition,
-      # and Service
-      #========================================#      
-      - name: Terraform Plan
-        id: plan-build
-        run: |
-          terraform plan  -var-file="prod.tfvars" -no-color -lock=false
-        working-directory: infra/
-        continue-on-error: true
-
-        
-      #===================================================#
-      # Terraform Apply Infrastructure Creation
-      #===================================================#
-      - name: Terraform Plan Status
-        if: steps.plan-build.outcome == 'failure'
-        run: exit 1
-
-      - name: Terraform Apply
-        id: apply-build
-        working-directory: infra/
-        run: terraform apply  -var-file="prod.tfvars" -auto-approve -lock=false
-        
-      #============================================#
-      # Add a comment to the pull request to indicate
-      # the task was successful, and provide the 
-      # details of the app url
-      #============================================#
+      #=======================================================================#
+      # Add a comment to the pull request to indicate the task was successful, 
+      # and provide the details of the app url
+      #=======================================================================#
       - name: Add comments to the PR
         uses: actions/github-script@v7
         if: github.event_name == 'pull_request'
