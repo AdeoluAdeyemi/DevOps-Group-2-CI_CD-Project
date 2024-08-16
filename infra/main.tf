@@ -216,10 +216,6 @@ resource "aws_ecr_lifecycle_policy" "tf_private_ecr_life_pol" {
 EOF
 }
 
-# # data "aws_iam_user" "user" {
-# #   user_name = "adeolu"
-# # }
-
 
 #ECS Cluster
 resource "aws_ecs_cluster" "tf_ecs_cluster" {
